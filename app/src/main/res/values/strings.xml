@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Photo Filters</string>
+    <string name="need_setup_permissions">Не все разрешения даны</string>
+</resources>
