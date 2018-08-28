@@ -2,21 +2,19 @@ package com.pinkunicorp.photofilters.screen.HandlePhoto
 
 import android.content.Context
 import android.support.v7.widget.RecyclerView
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import com.pinkunicorp.photofilters.R
-import java.nio.file.Files.size
-import android.view.LayoutInflater
 import com.pinkunicorp.photofilters.filters.IFilter
 
 
 class FiltersAdapter(var filtersList: List<IFilter>, var selectListener: FilterSelectListener?, var context: Context?) : RecyclerView.Adapter<FiltersAdapter.FilterViewHolder>(){
 
     interface FilterSelectListener {
-        fun select(index: Int, filter: IFilter)
+        fun select(index: Int)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FilterViewHolder {
@@ -30,7 +28,7 @@ class FiltersAdapter(var filtersList: List<IFilter>, var selectListener: FilterS
         holder.mTextView.setText(context?.getString(filtersList.get(position).nameResId))
         filtersList.get(position).applyFilter(holder.mImageView)
         holder.itemView.setOnClickListener{
-            selectListener?.select(position, filtersList.get(position))
+            selectListener?.select(position)
         }
     }
 

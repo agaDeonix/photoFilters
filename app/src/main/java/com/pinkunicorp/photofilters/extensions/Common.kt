@@ -10,8 +10,8 @@ import java.io.*
 fun Activity.getImageUri(inImage: Bitmap, name: String = "temp.jpg"): Uri {
     try {
         val cachePath = File(getCacheDir(), "images")
-        cachePath.mkdirs() // don't forget to make the directory
-        val stream = FileOutputStream("${cachePath.toString()}/$name") // overwrites this image every time
+        cachePath.mkdirs()
+        val stream = FileOutputStream("$cachePath/$name") // overwrites this image every time
         inImage.compress(Bitmap.CompressFormat.JPEG, 100, stream)
         stream.close()
         val newFile = File(cachePath, name)

@@ -63,4 +63,6 @@
         app:layout_constraintLeft_toRightOf="@+id/btnTakePhoto"
         app:srcCompat="@drawable/ic_photo_album" />
 
+    <include layout="@layout/part_progress" />
+
 </android.support.constraint.ConstraintLayout>

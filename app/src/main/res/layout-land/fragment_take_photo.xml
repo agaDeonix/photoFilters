@@ -60,4 +60,6 @@
         app:layout_constraintStart_toStartOf="@+id/btnTakePhoto"
         app:srcCompat="@drawable/ic_loop" />
 
+    <include layout="@layout/part_progress" />
+
 </android.support.constraint.ConstraintLayout>

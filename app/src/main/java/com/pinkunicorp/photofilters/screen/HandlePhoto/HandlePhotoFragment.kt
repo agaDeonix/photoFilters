@@ -13,21 +13,26 @@ import android.view.View
 import android.view.ViewGroup
 import com.pinkunicorp.photofilters.R
 import com.pinkunicorp.photofilters.extensions.getImageUri
-import com.pinkunicorp.photofilters.filters.*
+import com.pinkunicorp.photofilters.filters.IFilter
 import kotlinx.android.synthetic.main.fragment_handle_photo.*
 
 
-class HandlePhotoFragment : Fragment(), FiltersAdapter.FilterSelectListener {
+class HandlePhotoFragment : Fragment(), FiltersAdapter.FilterSelectListener, HandlePhotoView {
 
-    private var mSelectableFilter = 0
+    override fun applyFilter(filter: IFilter) {
+        filter.applyFilter(ivPhoto)
+    }
+
+    override fun initFiltersList(filters: List<IFilter>) {
+        val filtersAdapter = FiltersAdapter(filters, this, context)
+        initFiltersListOrientation(activity?.resources?.getConfiguration()?.orientation
+                ?: Configuration.ORIENTATION_PORTRAIT)
+        rvFilters?.setAdapter(filtersAdapter)
+    }
+
     private var mFiltersListState: Parcelable? = null
-    private val mFilters = arrayListOf(
-            NoneFilter(),
-            GrayscaleFilter(),
-            SepiaFilter(),
-            NegativeFilter(),
-            BinaryFilter()
-    )
+
+    private val mPresenter: HandlePhotoPresenter? = HandlePhotoPresenter(HandlePhotoModel())
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_handle_photo, container, false)
@@ -40,9 +45,11 @@ class HandlePhotoFragment : Fragment(), FiltersAdapter.FilterSelectListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        mPresenter?.attachView(this)
         arguments?.let {
             ivPhoto?.setImageURI(it.getParcelable(KEY_IMAGE))
         }
+        mPresenter?.initFiltersList()
         btnShare?.setOnClickListener {
             ivPhoto?.buildDrawingCache(true)
             shareImage(ivPhoto?.getDrawingCache(true))
@@ -50,11 +57,6 @@ class HandlePhotoFragment : Fragment(), FiltersAdapter.FilterSelectListener {
         btnBack?.setOnClickListener {
             activity?.onBackPressed()
         }
-
-        val filtersAdapter = FiltersAdapter(mFilters, this, context)
-        initFiltersListOrientation(activity?.getResources()?.getConfiguration()?.orientation
-                ?: Configuration.ORIENTATION_PORTRAIT)
-        rvFilters?.setAdapter(filtersAdapter)
     }
 
     private fun shareImage(bitmap: Bitmap?) {
@@ -69,9 +71,8 @@ class HandlePhotoFragment : Fragment(), FiltersAdapter.FilterSelectListener {
         }
     }
 
-    override fun select(index: Int, filter: IFilter) {
-        mSelectableFilter = index
-        filter.applyFilter(ivPhoto)
+    override fun select(index: Int) {
+        mPresenter?.changeFilter(index)
     }
 
     override fun onResume() {
@@ -79,7 +80,7 @@ class HandlePhotoFragment : Fragment(), FiltersAdapter.FilterSelectListener {
         mFiltersListState?.let {
             rvFilters?.layoutManager?.onRestoreInstanceState(it);
         }
-        mFilters[mSelectableFilter].applyFilter(ivPhoto)
+        mPresenter?.onResume()
     }
 
     fun initFiltersListOrientation(orientation: Int) {
@@ -95,20 +96,19 @@ class HandlePhotoFragment : Fragment(), FiltersAdapter.FilterSelectListener {
 
         mFiltersListState = rvFilters?.layoutManager?.onSaveInstanceState()
         outState.putParcelable(KEY_FILTERS_LIST_STATE, mFiltersListState)
-        outState.putInt(KEY_SELECTABLE_FILTER, mSelectableFilter)
-
+        mPresenter?.onSaveState(outState)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         mFiltersListState = savedInstanceState?.getParcelable(KEY_FILTERS_LIST_STATE)
-        mSelectableFilter = savedInstanceState?.getInt(KEY_SELECTABLE_FILTER) ?: 0
+        mPresenter?.onRestoreState(savedInstanceState)
     }
 
     companion object {
         private const val KEY_IMAGE = "KEY_IMAGE"
         private const val KEY_FILTERS_LIST_STATE = "KEY_FILTERS_LIST_STATE"
-        private const val KEY_SELECTABLE_FILTER = "KEY_SELECTABLE_FILTER"
+
         fun newInstance(image: Uri): HandlePhotoFragment {
             val arguments = Bundle()
             arguments.putParcelable(KEY_IMAGE, image)
