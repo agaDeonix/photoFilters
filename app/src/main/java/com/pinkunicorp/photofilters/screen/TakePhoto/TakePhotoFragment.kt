@@ -1,24 +1,20 @@
 package com.pinkunicorp.photofilters.screen.TakePhoto
 
-import android.Manifest
+import android.content.Intent
+import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.widget.LinearLayoutManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import com.pinkunicorp.photofilters.R
-import kotlinx.android.synthetic.main.fragment_take_photo.*
-import android.content.Intent
-import android.content.res.Configuration
-import android.graphics.Bitmap
-import android.net.Uri
-import android.provider.MediaStore
-import android.support.v7.widget.LinearLayoutManager
 import com.github.florent37.runtimepermission.kotlin.askPermission
+import com.pinkunicorp.photofilters.R
 import com.pinkunicorp.photofilters.extensions.getImageUri
 import com.pinkunicorp.photofilters.screen.Navigator
-import kotlinx.android.synthetic.main.fragment_handle_photo.*
+import kotlinx.android.synthetic.main.fragment_take_photo.*
 import java.io.IOException
 
 

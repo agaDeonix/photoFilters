@@ -5,23 +5,22 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.os.Parcelable
 import android.support.v4.app.Fragment
-import android.support.v4.content.FileProvider
 import android.support.v7.widget.LinearLayoutManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.pinkunicorp.photofilters.R
+import com.pinkunicorp.photofilters.extensions.getImageUri
 import com.pinkunicorp.photofilters.filters.*
 import kotlinx.android.synthetic.main.fragment_handle_photo.*
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.io.IOException
 
 
 class HandlePhotoFragment : Fragment(), FiltersAdapter.FilterSelectListener {
 
+    private var mSelectableFilter = 0
+    private var mFiltersListState: Parcelable? = null
     private val mFilters = arrayListOf(
             NoneFilter(),
             GrayscaleFilter(),
@@ -47,61 +46,40 @@ class HandlePhotoFragment : Fragment(), FiltersAdapter.FilterSelectListener {
         btnShare?.setOnClickListener {
             ivPhoto?.buildDrawingCache(true)
             shareImage(ivPhoto?.getDrawingCache(true))
-//            shareImage((ivPhoto?.drawable as? BitmapDrawable)?.bitmap)
         }
         btnBack?.setOnClickListener {
             activity?.onBackPressed()
         }
 
         val filtersAdapter = FiltersAdapter(mFilters, this, context)
-        initFiltersListOrientation(activity?.getResources()?.getConfiguration()?.orientation ?: Configuration.ORIENTATION_PORTRAIT)
+        initFiltersListOrientation(activity?.getResources()?.getConfiguration()?.orientation
+                ?: Configuration.ORIENTATION_PORTRAIT)
         rvFilters?.setAdapter(filtersAdapter)
     }
 
     private fun shareImage(bitmap: Bitmap?) {
-        context?.let {
-            try {
-                val cachePath = File(it.getCacheDir(), "images")
-                cachePath.mkdirs() // don't forget to make the directory
-                val stream = FileOutputStream(cachePath.toString() + "/image.jpg") // overwrites this image every time
-                bitmap?.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                stream.close()
-
-                val newFile = File(cachePath, "image.jpg")
-                val contentUri = FileProvider.getUriForFile(it, "com.pinkunicorp.photofilters.fileprovider", newFile)
-
-//                val share = Intent(Intent.ACTION_SEND)
-//                share.type = "image/*"
-//                share.putExtra(Intent.EXTRA_STREAM, contentUri)
-//                startActivity(Intent.createChooser(share, activity?.getString(R.string.share_via)))
-
-                if (contentUri != null) {
-
-                    val shareIntent = Intent()
-                    shareIntent.action = Intent.ACTION_SEND
-                    shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // temp permission for receiving app to read this file
-                    shareIntent.setDataAndType(contentUri, it.getContentResolver().getType(contentUri))
-                    shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri)
-                    startActivity(Intent.createChooser(shareIntent, activity?.getString(R.string.share_via)))
-
-                }
-            } catch (e: FileNotFoundException) {
-                e.printStackTrace()
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
+        bitmap?.let {
+            val contentUri = activity?.getImageUri(it, "image.jpg")
+            val shareIntent = Intent()
+            shareIntent.action = Intent.ACTION_SEND
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // temp permission for receiving app to read this file
+            shareIntent.setDataAndType(contentUri, activity?.getContentResolver()?.getType(contentUri))
+            shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri)
+            startActivity(Intent.createChooser(shareIntent, activity?.getString(R.string.share_via)))
         }
     }
 
-    override fun select(filter: IFilter) {
+    override fun select(index: Int, filter: IFilter) {
+        mSelectableFilter = index
         filter.applyFilter(ivPhoto)
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration?) {
-        super.onConfigurationChanged(newConfig)
-        newConfig?.let {
-            initFiltersListOrientation(it.orientation)
+    override fun onResume() {
+        super.onResume()
+        mFiltersListState?.let {
+            rvFilters?.layoutManager?.onRestoreInstanceState(it);
         }
+        mFilters[mSelectableFilter].applyFilter(ivPhoto)
     }
 
     fun initFiltersListOrientation(orientation: Int) {
@@ -112,8 +90,25 @@ class HandlePhotoFragment : Fragment(), FiltersAdapter.FilterSelectListener {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        mFiltersListState = rvFilters?.layoutManager?.onSaveInstanceState()
+        outState.putParcelable(KEY_FILTERS_LIST_STATE, mFiltersListState)
+        outState.putInt(KEY_SELECTABLE_FILTER, mSelectableFilter)
+
+    }
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        mFiltersListState = savedInstanceState?.getParcelable(KEY_FILTERS_LIST_STATE)
+        mSelectableFilter = savedInstanceState?.getInt(KEY_SELECTABLE_FILTER) ?: 0
+    }
+
     companion object {
-        private val KEY_IMAGE = "KEY_IMAGE"
+        private const val KEY_IMAGE = "KEY_IMAGE"
+        private const val KEY_FILTERS_LIST_STATE = "KEY_FILTERS_LIST_STATE"
+        private const val KEY_SELECTABLE_FILTER = "KEY_SELECTABLE_FILTER"
         fun newInstance(image: Uri): HandlePhotoFragment {
             val arguments = Bundle()
             arguments.putParcelable(KEY_IMAGE, image)

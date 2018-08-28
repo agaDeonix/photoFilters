@@ -16,7 +16,7 @@ import com.pinkunicorp.photofilters.filters.IFilter
 class FiltersAdapter(var filtersList: List<IFilter>, var selectListener: FilterSelectListener?, var context: Context?) : RecyclerView.Adapter<FiltersAdapter.FilterViewHolder>(){
 
     interface FilterSelectListener {
-        fun select(filter: IFilter)
+        fun select(index: Int, filter: IFilter)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FilterViewHolder {
@@ -30,7 +30,7 @@ class FiltersAdapter(var filtersList: List<IFilter>, var selectListener: FilterS
         holder.mTextView.setText(context?.getString(filtersList.get(position).nameResId))
         filtersList.get(position).applyFilter(holder.mImageView)
         holder.itemView.setOnClickListener{
-            selectListener?.select(filtersList.get(position))
+            selectListener?.select(position, filtersList.get(position))
         }
     }
 
