@@ -10,12 +10,15 @@ import android.widget.Toast
 import com.pinkunicorp.photofilters.R
 import kotlinx.android.synthetic.main.fragment_take_photo.*
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.MediaStore
+import android.support.v7.widget.LinearLayoutManager
 import com.github.florent37.runtimepermission.kotlin.askPermission
 import com.pinkunicorp.photofilters.extensions.getImageUri
 import com.pinkunicorp.photofilters.screen.Navigator
+import kotlinx.android.synthetic.main.fragment_handle_photo.*
 import java.io.IOException
 
 
@@ -27,19 +30,24 @@ class TakePhotoFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_take_photo, container, false)
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        retainInstance = true
+    }
+
     override fun onResume() {
         super.onResume()
         cameraView?.start()
         btnTakePhoto?.setOnClickListener {
-            // cameraView is a custom View which provides camera preview
             cameraView.captureImage { cameraKitImage ->
-                // Get the Bitmap from the captured shot and use it to make the API call
-                Toast.makeText(activity, "photo taked", Toast.LENGTH_SHORT)?.show()
                 handleImage(cameraKitImage.bitmap)
             }
         }
         btnGallery?.setOnClickListener {
             choosePhotoFromGallary()
+        }
+        btnToggleCamera?.setOnClickListener {
+            cameraView?.toggleFacing()
         }
     }
 
@@ -60,12 +68,10 @@ class TakePhotoFragment : Fragment() {
             if (data != null) {
                 val contentURI = data.data
                 try {
-//                    val bitmap = MediaStore.Images.Media.getBitmap(activity?.contentResolver, contentURI)
-                    Toast.makeText(activity, "Image Saved!", Toast.LENGTH_SHORT)?.show()
                     (activity as? Navigator)?.showHandlePhoto(contentURI)
                 } catch (e: IOException) {
                     e.printStackTrace()
-                    Toast.makeText(activity, "Failed!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(activity, activity?.getString(R.string.error_load_image), Toast.LENGTH_SHORT).show()
                 }
 
             }
@@ -80,6 +86,14 @@ class TakePhotoFragment : Fragment() {
             }.onDeclined { e ->
                 Toast.makeText(activity, R.string.need_setup_permissions, Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+        newConfig?.let {
+            cameraView?.stop()
+            cameraView?.start()
         }
     }
 }

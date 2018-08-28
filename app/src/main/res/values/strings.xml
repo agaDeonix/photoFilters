@@ -1,4 +1,12 @@
 <resources>
     <string name="app_name">Photo Filters</string>
     <string name="need_setup_permissions">Не все разрешения даны</string>
+    <string name="title_handler">Обработка</string>
+    <string name="share_via">Поделиться через...</string>
+    <string name="filter_none">Оригинал</string>
+    <string name="filter_grayscale">Оттенки серого</string>
+    <string name="filter_sepia">Сепия</string>
+    <string name="filter_negative">Негатив</string>
+    <string name="filter_binary">Черно-белый</string>
+    <string name="error_load_image">Не удалось загрузить фотографию</string>
 </resources>
